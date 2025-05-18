@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with PDF</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap">
+    <style>
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+    
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+    
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            height: 85vh;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            padding-top: 60px;
+            overflow: hidden;
+        }
+    
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+    
+        /* Button Styles */
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            color: #6a11cb;
+            background: #fff;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1;
+        }
+    
+        .logout-btn:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+    
+        input[type="file"] {
+            display: none;
+        }
+    
+        .file-upload-label {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            color: #6a11cb;
+            background: #fff;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin: 0 auto 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+    
+        .file-upload-label:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+    
+        /* Chat container styling */
+        .chat-box {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0; /* Fix for flexbox overflow */
+        }
+    
+        #chat-output {
+            flex-grow: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+    
+        /* Message styling */
+        .message {
+            display: flex;
+            gap: 0.75rem;
+            max-width: 90%;
+            padding: 0.75rem;
+            border-radius: 1rem;
+            animation: fadeIn 0.3s ease-out;
+            word-break: break-word;
+        }
+    
+        .user-message {
+            align-self: flex-start;
+            background: rgba(106, 17, 203, 0.3);
+            border-bottom-left-radius: 0.25rem;
+        }
+    
+        .ai-message {
+            align-self: flex-end;
+            background: rgba(216, 212, 212, 0.525);
+            border-bottom-right-radius: 0.25rem;
+        }
+    
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+    
+        .message-content {
+            flex-grow: 1;
+            min-width: 0; /* Fix for flexbox overflow */
+        }
+    
+        .message-sender {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            font-size: 0.8rem;
+        }
+    
+        .message-text {
+            font-size: 0.9rem;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+    
+        /* Input area styling */
+        .input-area {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: auto; /* Push to bottom */
+        }
+    
+        #userInput {
+            flex-grow: 1;
+            padding: 10px 15px;
+            font-size: 0.9rem;
+            border: none;
+            border-radius: 50px;
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+    
+        #userInput::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+    
+        #userInput:focus {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    
+        .send-btn {
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            color: #6a11cb;
+            background: #fff;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+    
+        .send-btn:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+    
+        /* Scrollbar styling */
+        #chat-output::-webkit-scrollbar {
+            width: 6px;
+        }
+    
+        #chat-output::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+    
+        #chat-output::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+    
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    
+        /* Background Animation */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 10%, transparent 10.01%);
+            background-size: 20px 20px;
+            animation: moveBackground 10s linear infinite;
+            z-index: -1;
+        }
+    
+        @keyframes moveBackground {
+            from { transform: translate(0, 0); }
+            to { transform: translate(20px, 20px); }
+        }
+    
+        /* Modal Styles */
+        .custom-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+    
+        .modal-content {
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+    
+        .modal-content.success {
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+        }
+    
+        .modal-content.error {
+            background: linear-gradient(135deg, #ff4d4d, #c62828);
+        }
+    
+        .modal-icon {
+            width: 60px;
+            height: 60px;
+            color: white;
+            margin-bottom: 1rem;
+        }
+    
+        .modal-content h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+    
+        .modal-content p {
+            margin-bottom: 1.5rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+    
+        .modal-button {
+            padding: 8px 20px;
+            background: white;
+            border: none;
+            border-radius: 50px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+    
+        .modal-button:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+    
+        /* Loading Spinner */
+        .loading-spinner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+    
+        .loading-spinner .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            animation: spin 1s linear infinite;
+        }
+    
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="logout-btn" onclick="logout()">Logout</button>
+        <h1>Chat with your PDF</h1>
+        
+        <label for="pdfUpload" class="file-upload-label">Upload PDF</label>
+        <input type="file" id="pdfUpload" accept="application/pdf">
+        
+        <div class="chat-box">
+            <div id="chat-output"></div>
+            <div class="input-area">
+                <input type="text" id="userInput" placeholder="Ask a question...">
+                <button class="send-btn" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Message Modal -->
+    <div id="successModal" class="custom-modal">
+        <div class="modal-content success">
+            <svg viewBox="0 0 24 24" class="modal-icon">
+                <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            <h2 id="successTitle"></h2>
+            <p id="successMessage"></p>
+            <button class="modal-button" onclick="hideModal('successModal')">OK</button>
+        </div>
+    </div>
+
+    <!-- Error Message Modal -->
+    <div id="errorModal" class="custom-modal">
+        <div class="modal-content error">
+            <svg viewBox="0 0 24 24" class="modal-icon">
+                <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+            <h2 id="errorTitle"></h2>
+            <p id="errorMessage"></p>
+            <button class="modal-button" onclick="hideModal('errorModal')">OK</button>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="loading-spinner">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Avatar images -->
+    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" id="user-avatar" style="display:none;" alt="User">
+    <img src="https://cdn-icons-png.flaticon.com/512/4712/4712035.png" id="ai-avatar" style="display:none;" alt="AI">
+
+    <script src="/js/main.js"></script>
+</body>
+</html>

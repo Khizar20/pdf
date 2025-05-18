@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: pdf-chatbot-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - pdf-chatbot-network
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pdf-chatbot-backend
+    volumes:
+      - ./backend:/app
+      - ./backend/public:/app/public
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+    depends_on:
+      - mongodb
+    networks:
+      - pdf-chatbot-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: pdf-chatbot-frontend
+    volumes:
+      - ./frontend/public:/usr/share/nginx/html
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - pdf-chatbot-network
+
+networks:
+  pdf-chatbot-network:
+    name: pdf-chatbot-network
+
+volumes:
+  mongodb_data: 
