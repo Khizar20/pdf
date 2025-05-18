@@ -3,13 +3,14 @@ pipeline {
     
     environment {
         DOCKER_COMPOSE_PROJECT = 'pdf-chatbot-cicd'
+        GITHUB_URL = 'https://github.com/Khizar20/chatbot.git'  // Replace with your actual GitHub URL
     }
     
     stages {
         stage('Checkout') {
             steps {
                 // Checkout code from GitHub
-                checkout scm
+                git url: "${GITHUB_URL}", branch: 'master'
             }
         }
         
