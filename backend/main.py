@@ -17,12 +17,17 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 
+
 # Load environment variables
 load_dotenv()
 MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017/")
 SECRET_KEY = os.getenv("SECRET_KEY", "your_secret_key")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
+# More robust environment variable handling
+try:
+    ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+except (ValueError, TypeError):
+    ACCESS_TOKEN_EXPIRE_MINUTES = 30  # Default fallback value
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # App setup
@@ -36,6 +41,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# app.mount("/", StaticFiles(directory="../frontend/public", html=True), name="static")
 
 
 # MongoDB setup
@@ -93,7 +99,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     return user
 
 # Routes
-@app.post("/signup")
+@app.post("/api/signup")
 def signup(user: User):
     if users_collection.find_one({"username": user.username}):
         raise HTTPException(status_code=400, detail="Username already registered")
@@ -101,7 +107,7 @@ def signup(user: User):
     users_collection.insert_one({"username": user.username, "hashed_password": hashed_password})
     return {"success": True, "message": "User created successfully"}
 
-@app.post("/token")
+@app.post("/api/token")
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user_data = users_collection.find_one({"username": form_data.username})
     if not user_data or not verify_password(form_data.password, user_data["hashed_password"]):
@@ -109,15 +115,15 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
     access_token = create_access_token({"sub": form_data.username}, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     return {"access_token": access_token, "token_type": "bearer"}
 
-@app.get("/users/me")
+@app.get("/api/users/me")
 def read_users_me(current_user: dict = Depends(get_current_user)):
     return {"username": current_user["username"]}
 
-@app.post("/upload_pdf")
+@app.post("/api/upload_pdf")
 async def upload_pdf(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="File must be a PDF")
-    
+
     try:
         file_contents = await file.read()
         pdf_id = pdf_collection.insert_one({
@@ -129,22 +135,22 @@ async def upload_pdf(file: UploadFile = File(...), current_user: dict = Depends(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/extract_pdf/{pdf_id}")
+@app.get("/api/extract_pdf/{pdf_id}")
 async def extract_pdf(pdf_id: str, current_user: dict = Depends(get_current_user)):
     try:
         pdf_data = pdf_collection.find_one({"_id": ObjectId(pdf_id)})
         if not pdf_data:
             raise HTTPException(status_code=404, detail="PDF not found")
-        
+
         pdf_bytes = BytesIO(pdf_data["content"])
         reader = PdfReader(pdf_bytes)
         text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
-        
+
         return {"filename": pdf_data["filename"], "extracted_text": text}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/chat_with_pdf/{pdf_id}")
+@app.post("/api/chat_with_pdf/{pdf_id}")
 async def chat_with_pdf(pdf_id: str, user_message: str, current_user: dict = Depends(get_current_user)):
     try:
         if not GROQ_API_KEY:
@@ -156,7 +162,7 @@ async def chat_with_pdf(pdf_id: str, user_message: str, current_user: dict = Dep
 
         pdf_bytes = BytesIO(pdf_data["content"])
         reader = PdfReader(pdf_bytes)
-        
+
         extracted_text = "\n".join([reader.pages[i].extract_text() for i in range(min(5, len(reader.pages))) if reader.pages[i].extract_text()])
 
         if not extracted_text.strip():
@@ -180,10 +186,12 @@ async def chat_with_pdf(pdf_id: str, user_message: str, current_user: dict = Dep
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Mount the "public" directory to serve static files
-app.mount("/", StaticFiles(directory="public", html=True), name="static")
 
 # Redirect to chatbot page after login
-@app.get("/")
-def redirect_to_chatbot():
-    return RedirectResponse(url="/index.html")
+#@app.get("/")
+#def redirect_to_chatbot():
+    #return RedirectResponse(url="/index.html")
+# Either remove this entirely or change to:
+@app.get("/api")
+def root():
+    return {"message": "API is running"}
