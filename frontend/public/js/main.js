@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Add event listeners
     document.getElementById("pdfUpload").addEventListener("change", uploadPDF);
     document.getElementById("sendMessage").addEventListener("click", sendMessage);
-    
+
     // Enter key support
     document.getElementById("userInput").addEventListener("keypress", function(e) {
         if (e.key === "Enter") {
@@ -62,7 +62,7 @@ async function uploadPDF() {
     formData.append("file", fileInput.files[0]);
 
     try {
-        const response = await fetch("http://127.0.0.1:8000/upload_pdf", {
+        const response = await fetch("/api/upload_pdf", {
             method: "POST",
             body: formData,
             headers: {
@@ -111,7 +111,7 @@ async function sendMessage() {
         addMessageToChat(message, "user");
         userInput.value = "";
 
-        const response = await fetch(`http://127.0.0.1:8000/chat_with_pdf/${pdfId}?user_message=${encodeURIComponent(message)}`, {
+        const response = await fetch(`/api/chat_with_pdf/${pdfId}?user_message=${encodeURIComponent(message)}`, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${localStorage.getItem("token")}`
@@ -138,16 +138,16 @@ function addMessageToChat(text, sender) {
     const chatOutput = document.getElementById("chat-output");
     const messageDiv = document.createElement("div");
     messageDiv.className = `message ${sender}-message`;
-    
+
     // Limit very long words by inserting zero-width spaces every 20 chars
     const formattedText = text.replace(/(.{20})/g, "$1\u200B");
-    
-    const avatar = sender === "user" 
-        ? document.getElementById("user-avatar").src 
+
+    const avatar = sender === "user"
+        ? document.getElementById("user-avatar").src
         : document.getElementById("ai-avatar").src;
-    
+
     const senderName = sender === "user" ? "You" : "AI Assistant";
-    
+
     messageDiv.innerHTML = sender === "user"
         ? `
             <img src="${avatar}" class="message-avatar" alt="${senderName}">
