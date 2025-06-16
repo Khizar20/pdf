@@ -1,20 +1,13 @@
-FROM httpd:2.4
+FROM nginx:alpine
 
-# Enable required modules
-RUN sed -i \
-    -e '/LoadModule proxy_module/s/^#//g' \
-    -e '/LoadModule proxy_http_module/s/^#//g' \
-    -e '/LoadModule rewrite_module/s/^#//g' \
-    -e '/LoadModule log_config_module/s/^#//g' \
-    /usr/local/apache2/conf/httpd.conf
+# Copy frontend files
+COPY public /usr/share/nginx/html
 
-# Copy Apache configuration
-COPY apache.conf /usr/local/apache2/conf/httpd.conf
+# Set proper permissions
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
+    chmod -R 755 /usr/share/nginx/html
 
-# Copy your frontend files
-COPY ./public/ /usr/local/apache2/htdocs/
-
-# Set permissions
-RUN chown -R www-data:www-data /usr/local/apache2/htdocs/
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
