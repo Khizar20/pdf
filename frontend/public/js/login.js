@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", function () {
         submitBtn.style.display = "none";
 
         try {
-            const response = await fetch("http://127.0.0.1:8000/token", {
+            const response = await fetch("/api/token", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
@@ -48,10 +48,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (response.ok) {
                 localStorage.setItem("token", data.access_token);
-                
+
                 // Show beautiful success message
                 successMessage.style.display = "flex";
-                
+
                 // Auto-redirect after 2 seconds
                 setTimeout(() => {
                     window.location.href = "main.html";
@@ -59,11 +59,11 @@ document.addEventListener("DOMContentLoaded", function () {
             } else {
                 // Show specific error message
                 const errorMsg = data.detail || "Invalid username or password";
-                
+
                 // Show error modal
                 errorModalText.textContent = errorMsg;
                 errorMessage.style.display = "flex";
-                
+
                 // Also show inline errors if relevant
                 if (errorMsg.toLowerCase().includes("username")) {
                     usernameError.textContent = errorMsg;
