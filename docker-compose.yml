@@ -13,15 +13,12 @@ services:
       - mongo
 
   frontend:
-    image: nginx:alpine
+    build: ./frontend
     ports:
       - "80:80"
-    volumes:
-      - ./frontend/public:/usr/share/nginx/html:ro
-      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    user: "101:101"  # Run as nginx user
     depends_on:
       - backend
+
 
   mongo:
     image: mongo:5.0
