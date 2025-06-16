@@ -1,12 +1,20 @@
-FROM nginx:alpine
+FROM httpd:2.4
 
-# Copy the static files to the nginx html directory
-COPY public/ /usr/share/nginx/html/
+# Enable required modules
+RUN sed -i \
+    -e '/LoadModule proxy_module/s/^#//g' \
+    -e '/LoadModule proxy_http_module/s/^#//g' \
+    -e '/LoadModule rewrite_module/s/^#//g' \
+    -e '/LoadModule log_config_module/s/^#//g' \
+    /usr/local/apache2/conf/httpd.conf
 
-# Copy custom nginx configuration if needed
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy Apache configuration
+COPY apache.conf /usr/local/apache2/conf/httpd.conf
 
-EXPOSE 3000
+# Copy your frontend files
+COPY ./public/ /usr/local/apache2/htdocs/
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"] 
+# Set permissions
+RUN chown -R www-data:www-data /usr/local/apache2/htdocs/
+
+EXPOSE 80
