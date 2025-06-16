@@ -12,7 +12,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo 'Pulling code from GitHub repository...'
-                git url: "${GITHUB_URL}", branch: 'main'
+                git url: "${GITHUB_URL}", branch: 'master'
                 echo 'Code checkout completed successfully'
             }
         }
