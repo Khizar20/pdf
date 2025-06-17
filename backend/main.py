@@ -17,7 +17,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 # this is my main file
-# this is fastapi code
+# this is fastapi code123
 # Load environment variables
 load_dotenv()
 MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017/")
