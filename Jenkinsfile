@@ -160,6 +160,48 @@ EOF
                 '''
             }
         }
+        
+        stage('Build Backend') {
+            steps {
+                dir('backend') {
+                    sh 'docker build -t pdf-chatbot-backend .'
+                }
+            }
+        }
+        
+        stage('Build Frontend') {
+            steps {
+                dir('frontend') {
+                    sh 'docker build -t pdf-chatbot-frontend .'
+                }
+            }
+        }
+        
+        stage('Run Tests') {
+            steps {
+                dir('backend/tests') {
+                    sh 'docker build -t pdf-chatbot-tests .'
+                    sh '''
+                        docker run --rm \
+                            --network host \
+                            -v $(pwd)/test_reports:/app/test_reports \
+                            pdf-chatbot-tests
+                    '''
+                }
+            }
+            post {
+                always {
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'backend/tests/test_reports',
+                        reportFiles: 'test_report.html',
+                        reportName: 'Selenium Test Report'
+                    ])
+                }
+            }
+        }
     }
     
     post {
