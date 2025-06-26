@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", function () {
         submitBtn.style.display = "none";
 
         try {
-            const response = await fetch("http://127.0.0.1:8000/signup", {
+            const response = await fetch("/api/signup", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (response.ok) {
                 // Show beautiful success message
                 successMessage.style.display = "flex";
-                
+
                 // Optional: Auto-redirect after 3 seconds
                 setTimeout(() => {
                     window.location.href = "login.html";
