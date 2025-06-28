@@ -151,15 +151,20 @@ EOF
                             echo "Waiting for services to be fully ready..."
                             sleep 10
 
-                            # Get EC2 public IP address for health checks
-                            EC2_PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "localhost")
+                            # Get EC2 public IP address for health checks with better error handling
+                            echo "🔍 Detecting deployment environment..."
+                            EC2_PUBLIC_IP=$(curl -s --max-time 5 http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null)
                             
-                            if [ "$EC2_PUBLIC_IP" = "localhost" ]; then
-                                echo "⚠️ Running locally - using localhost for health checks"
-                                FRONTEND_URL="http://localhost:80"
-                                BACKEND_URL="http://localhost:8000"
+                            # Check if we got a valid IP address (not HTML error or empty)
+                            if echo "$EC2_PUBLIC_IP" | grep -E '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$' > /dev/null; then
+                                echo "🌐 Successfully detected EC2 public IP: $EC2_PUBLIC_IP"
+                                FRONTEND_URL="http://$EC2_PUBLIC_IP:80"
+                                BACKEND_URL="http://$EC2_PUBLIC_IP:8000"
                             else
-                                echo "🌐 Running on EC2 - using public IP: $EC2_PUBLIC_IP"
+                                echo "⚠️ Metadata service unavailable, using known EC2 public IP"
+                                # Fallback to known EC2 public IP when metadata service is not accessible
+                                EC2_PUBLIC_IP="3.139.104.31"
+                                echo "🌐 Using EC2 public IP: $EC2_PUBLIC_IP"
                                 FRONTEND_URL="http://$EC2_PUBLIC_IP:80"
                                 BACKEND_URL="http://$EC2_PUBLIC_IP:8000"
                             fi
@@ -223,16 +228,19 @@ EOF
                 echo 'Displaying application deployment information...'
                 sh '''
                     # Get EC2 public IP address for display
-                    EC2_PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "localhost")
+                    EC2_PUBLIC_IP=$(curl -s --max-time 5 http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null)
                     
-                    if [ "$EC2_PUBLIC_IP" = "localhost" ]; then
-                        FRONTEND_URL="http://localhost:80"
-                        BACKEND_URL="http://localhost:8000"
-                        DEPLOYMENT_TYPE="Local Development"
-                    else
+                    # Check if we got a valid IP address
+                    if echo "$EC2_PUBLIC_IP" | grep -E '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$' > /dev/null; then
                         FRONTEND_URL="http://$EC2_PUBLIC_IP:80"
                         BACKEND_URL="http://$EC2_PUBLIC_IP:8000"
-                        DEPLOYMENT_TYPE="AWS EC2 Instance"
+                        DEPLOYMENT_TYPE="AWS EC2 Instance (Auto-detected)"
+                    else
+                        # Fallback to known EC2 public IP
+                        EC2_PUBLIC_IP="3.139.104.31"
+                        FRONTEND_URL="http://$EC2_PUBLIC_IP:80"
+                        BACKEND_URL="http://$EC2_PUBLIC_IP:8000"
+                        DEPLOYMENT_TYPE="AWS EC2 Instance (Known IP)"
                     fi
 
                     echo "==================================="
@@ -266,17 +274,20 @@ EOF
                     echo "=========================================="
                     
                     # Get EC2 public IP address
-                    EC2_PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "localhost")
+                    EC2_PUBLIC_IP=$(curl -s --max-time 5 http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null)
                     
-                                         if [ "$EC2_PUBLIC_IP" = "localhost" ]; then
-                         echo "⚠️ Running locally - using localhost"
-                         FRONTEND_URL="http://localhost:80"
-                         BACKEND_URL="http://localhost:8000"
-                     else
-                         echo "🌐 Running on EC2 - using public IP: $EC2_PUBLIC_IP"
-                         FRONTEND_URL="http://$EC2_PUBLIC_IP:80"
-                         BACKEND_URL="http://$EC2_PUBLIC_IP:8000"
-                     fi
+                    # Check if we got a valid IP address
+                    if echo "$EC2_PUBLIC_IP" | grep -E '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$' > /dev/null; then
+                        echo "🌐 Running on EC2 - using detected IP: $EC2_PUBLIC_IP"
+                        FRONTEND_URL="http://$EC2_PUBLIC_IP:80"
+                        BACKEND_URL="http://$EC2_PUBLIC_IP:8000"
+                    else
+                        echo "⚠️ Metadata service unavailable, using known EC2 IP"
+                        EC2_PUBLIC_IP="3.139.104.31"
+                        echo "🌐 Running on EC2 - using known IP: $EC2_PUBLIC_IP"
+                        FRONTEND_URL="http://$EC2_PUBLIC_IP:80"
+                        BACKEND_URL="http://$EC2_PUBLIC_IP:8000"
+                    fi
                     
                     echo "🔗 Frontend URL: $FRONTEND_URL"
                     echo "🔗 Backend URL: $BACKEND_URL"
