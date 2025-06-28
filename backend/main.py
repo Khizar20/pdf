@@ -18,7 +18,7 @@ from fastapi.staticfiles import StaticFiles
 
 
 # Load environment variables
-# hello00
+# hello000
 load_dotenv()
 MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017/")
 SECRET_KEY = os.getenv("SECRET_KEY", "your_secret_key")
