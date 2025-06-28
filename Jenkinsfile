@@ -313,18 +313,7 @@ EOF
                     echo '📋 Archiving test results and generating reports...'
                     // Archive test results
                     archiveArtifacts artifacts: 'backend/tests/test_reports/**', fingerprint: true, allowEmptyArchive: true
-                    
-                    // Publish HTML test report
-                    publishHTML([
-                        allowMissing: false,
-                        alwaysLinkToLastBuild: true,
-                        keepAll: true,
-                        reportDir: 'backend/tests/test_reports',
-                        reportFiles: 'test_report.html',
-                        reportName: 'Selenium Test Report'
-                    ])
-                    
-                    echo '📊 Test report published successfully'
+                    echo '📊 Test report archived successfully'
                 }
                 success {
                     echo '''

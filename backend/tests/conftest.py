@@ -47,15 +47,33 @@ def driver():
     # Get the current directory for chromedriver
     current_dir = os.path.dirname(os.path.abspath(__file__))
     
-    # Set up ChromeDriver path based on platform
+    # Set up ChromeDriver path - check multiple common locations
+    chromedriver_paths = []
+    
     if sys.platform == "win32":
-        chromedriver_path = os.path.join(current_dir, "chromedriver.exe")
+        chromedriver_paths = [
+            os.path.join(current_dir, "chromedriver.exe"),
+            r"C:\chromedriver\chromedriver.exe",
+            "chromedriver.exe"
+        ]
     else:
-        chromedriver_path = os.path.join(current_dir, "chromedriver")
+        chromedriver_paths = [
+            "/usr/local/bin/chromedriver",  # Docker/system installation
+            os.path.join(current_dir, "chromedriver"),  # Local directory
+            "/usr/bin/chromedriver",  # Alternative system path
+            "chromedriver"  # PATH
+        ]
+    
+    # Find the first existing chromedriver
+    chromedriver_path = None
+    for path in chromedriver_paths:
+        if os.path.exists(path):
+            chromedriver_path = path
+            break
     
     # Verify chromedriver exists
-    if not os.path.exists(chromedriver_path):
-        raise FileNotFoundError(f"ChromeDriver not found at {chromedriver_path}")
+    if not chromedriver_path:
+        raise FileNotFoundError(f"ChromeDriver not found in any of these locations: {chromedriver_paths}")
     
     # Create service with explicit path
     service = Service(executable_path=chromedriver_path)
