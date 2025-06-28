@@ -19,8 +19,6 @@ services:
     depends_on:
       - backend
 
-
-
   mongo:
     image: mongo:5.0
     volumes:
